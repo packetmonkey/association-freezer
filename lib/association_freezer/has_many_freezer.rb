@@ -6,7 +6,7 @@ module AssociationFreezer
     end
     
     def freeze
-      self.frozen_data = Marshal.dump(nonfrozen.attributes) if nonfrozen
+      self.frozen_data = Marshal.dump(nonfrozen.map(&:attributes)) if nonfrozen
     end
     
     def unfreeze
@@ -29,12 +29,13 @@ module AssociationFreezer
     end
     
     def load_frozen
-      attributes = Marshal.load(frozen_data)
-      target = target_class.new(attributes.except('id'))
-      target.id = attributes['id']
-      target.instance_variable_set('@new_record', false)
-      target.readonly!
-      target.freeze
+      Marshal.load(frozen_data).map do |attributes|
+        frozen_object =  target_class.new( attributes.except('id') )
+        frozen_object.id = attributes['id']
+        frozen_object.instance_variable_set('@new_record', false)
+        frozen_object.readonly!
+        frozen_object.freeze
+      end.freeze
     end
     
     def nonfrozen(*args)
