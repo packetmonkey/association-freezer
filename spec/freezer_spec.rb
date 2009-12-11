@@ -43,7 +43,19 @@ describe Order do
       @order.ship_method.should be_nil
     end
     
-    describe "when freezing association" do
+    describe "when freezing has_many association" do
+      before(:each) do
+        @order.products << Product.create!(:name => :wrench)
+        @order.freeze_products
+      end
+      
+      it "should freeze associated model" do
+        @order.products.should be_frozen
+      end
+      
+    end
+    
+    describe "when freezing belongs_to association" do
       before(:each) do
         @ship_method = ShipMethod.create!(:price => 5)
         @order.ship_method = @ship_method

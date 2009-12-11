@@ -8,13 +8,19 @@ module AssociationFreezer
     def generate
       # it is very important that we first make sure this hasn't already been done
       # because otherwise it will result in an endless loop the way alias method works.
+            
       return if previously_generated? || !frozen_column_exists?
       
       reflection = @reflection
+      
       freezer = "#{reflection.name}_freezer"
       
       generate_method freezer do
-        read_attribute("@#{freezer}") || write_attribute("@#{freezer}", BelongsToFreezer.new(self, reflection))
+        if reflection.macro == :belongs_to
+          read_attribute("@#{freezer}") || write_attribute("@#{freezer}", BelongsToFreezer.new(self, reflection))
+        elsif reflection.macro == :has_many
+          read_attribute("@#{freezer}") || write_attribute("@#{freezer}", HasManyFreezer.new(self, reflection))
+        end
       end
       
       generate_method "freeze_#{reflection.name}" do

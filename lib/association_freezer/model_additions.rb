@@ -5,6 +5,11 @@ module AssociationFreezer
       reflect_on_all_associations(:belongs_to).each do |reflection|
         MethodGenerator.new(reflection).generate
       end
+      
+      reflect_on_all_associations(:has_many).each do |reflection|
+        MethodGenerator.new(reflection).generate
+      end
+      
     end
   end
 end
