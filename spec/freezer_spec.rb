@@ -43,75 +43,88 @@ describe Order do
       @order.ship_method.should be_nil
     end
     
-    describe "when freezing has_many association" do
-      before(:each) do
-        @order.products << Product.create!(:name => :wrench)
-        @order.freeze_products
-      end
-      
-      it "should freeze associated model" do
-        @order.products.should be_frozen
-      end
-      
-    end
     
-    describe "when freezing belongs_to association" do
+    describe "when freezing associations" do
       before(:each) do
         @ship_method = ShipMethod.create!(:price => 5)
         @order.ship_method = @ship_method
         @order.freeze_ship_method
+        
+        @product = Product.create!(:name => :wrench)
+        @order.products << @product
+        @order.freeze_products
       end
       
       it "should freeze associated model" do
         @order.ship_method.should be_frozen
+        @order.products.should be_frozen
       end
       
       it "should not freeze original object" do
         @ship_method.should_not be_frozen
+        @product.should_not be_frozen
       end
       
       it "should still consider model frozen after reloading association" do
         @order.ship_method(true).should be_frozen
+        @order.products(true).should be_frozen
       end
       
       it "should ignore changes to associated model" do
         @ship_method.update_attribute(:price, 8)
         @order.ship_method.price.should == 5
         @order.ship_method(true).price.should == 5
+        
+        @product.update_attribute(:name, :hammer)
+        @order.products.first.name.should == :wrench
       end
       
       it "should be frozen after reloading order" do
         @order.save!
         @order.reload
         @order.ship_method.should be_frozen
+        @order.products.should be_frozen
       end
       
       it "should not be frozen when unfreezing" do
         @order.unfreeze_ship_method
         @order.ship_method.should_not be_frozen
+        
+        @order.unfreeze_products
+        @order.products.should_not be_frozen
       end
       
       it "should restore original attributes when unfreezing" do
         @ship_method.update_attribute(:price, 8)
         @order.unfreeze_ship_method
         @order.ship_method.price.should == 8
+        
+        @product.update_attribute(:name, :hammer)
+        @order.unfreeze_products
+        @order.products.first.name.should == :hammer
       end
       
       it "should raise an exception when attempting to save associated model" do
         lambda { @order.ship_method.save }.should raise_error
         lambda { @order.ship_method.save! }.should raise_error
+        
+        lambda { @order.products.save }.should raise_error
+        lambda { @order.products.save! }.should raise_error
       end
       
       it "should raise an exception when attempting to replace association" do
         lambda { @order.ship_method = ShipMethod.new }.should raise_error
+        lambda { @order.products = Product.new }.should raise_error
       end
       
       it "should keep id attribute for association" do
         @order.ship_method.id.should == @ship_method.id
+        @order.products.first.id.should == @product.id
       end
       
       it "should not consider association a new record" do
         @order.ship_method.should_not be_new_record
+        @order.products.first.should_not be_new_record
       end
     end
   end
