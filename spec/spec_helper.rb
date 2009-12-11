@@ -14,9 +14,14 @@ ActiveRecord::Base.establish_connection({
 # load models
 # there's probably a better way to handle this
 require File.dirname(__FILE__) + '/lib/order.rb'
+require File.dirname(__FILE__) + '/lib/product.rb'
+
 CreateOrders.migrate(:up) unless Order.table_exists?
 require File.dirname(__FILE__) + '/lib/ship_method.rb'
+
 CreateShipMethods.migrate(:up) unless ShipMethod.table_exists?
+CreateProducts.migrate(:up) unless Product.table_exists?
+
 
 Spec::Runner.configure do |config|
   config.mock_with :mocha
